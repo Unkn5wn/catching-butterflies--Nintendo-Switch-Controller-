@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catching Butterflies</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #menuPage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .menu-content {
+            text-align: center;
+            color: white;
+        }
+
+        .menu-content h1 {
+            font-size: 64px;
+            margin-bottom: 50px;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .menu-button {
+            width: 300px;
+            padding: 20px;
+            margin: 15px;
+            font-size: 24px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .menu-button:hover, .menu-button.selected {
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            background: #ffd700;
+            color: #000;
+        }
+
+        #gameCanvas {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 100;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        #objective {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 100;
+            background: rgba(255, 215, 0, 0.3);
+            border: 3px solid #ffd700;
+            padding: 20px;
+            border-radius: 15px;
+            min-width: 300px;
+        }
+
+        #objective h3 {
+            color: #ffd700;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #undergroundStats {
+            display: none;
+            margin-top: 10px;
+        }
+
+        #notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+            z-index: 200;
+        }
+
+        #levelUpNotification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 50px 80px;
+            border-radius: 20px;
+            font-size: 48px;
+            font-weight: bold;
+            display: none;
+            z-index: 300;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(138, 43, 226, 0.8);
+            border: 5px solid #8b5cf6;
+        }
+
+        #levelUpNotification.show {
+            display: block;
+            animation: levelUpPulse 0.5s ease-out forwards;
+        }
+
+        @keyframes levelUpPulse {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #completionScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        #completionScreen.show {
+            display: flex;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #completionScreen h1 {
+            font-size: 72px;
+            margin-bottom: 30px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        #completionScreen p {
+            font-size: 28px;
+            margin: 15px 0;
+        }
+
+        #completionScreen button {
+            margin-top: 50px;
+            padding: 20px 50px;
+            font-size: 24px;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #completionScreen button:hover {
+            transform: scale(1.1);
+        }
+
+        #store {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            display: none;
+            min-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 300;
+            pointer-events: auto;
+        }
+
+        #store h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 32px;
+        }
+
+        #store h3 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #34495e;
+            font-size: 24px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        #store button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 18px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        #store button:hover:not(:disabled), #store button.selected {
+            background: #2980b9;
+            transform: scale(1.02);
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        #store .close {
+            background: #e74c3c;
+            text-align: center;
+        }
+
+        #store .close.selected {
+            background: #c0392b;
+        }
+
+        .purchased {
+            background: #27ae60 !important;
+        }
+
+        .purchased.selected {
+            background: #229954 !important;
+        }
+
+        #characterButtons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .character-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .character-preview {
+            font-size: 30px;
+        }
+
+        #pauseMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            display: none;
+            z-index: 400;
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        #pauseMenu h2 {
+            font-size: 48px;
+            margin-bottom: 30px;
+        }
+
+        #pauseMenu button {
+            width: 300px;
+            padding: 20px;
+            margin: 15px;
+            font-size: 24px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #pauseMenu button:hover, #pauseMenu button.selected {
+            background: #2980b9;
+            transform: scale(1.05);
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .money-negative {
+            color: #e74c3c;
+        }
+
+        #controllerStatus {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        /* 🔒 PROTECTION LAYER 1: CSS HIDING */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="menuPage">
+        <div class="menu-content">
+            <h1>🦋 Catching Butterflies</h1>
+            <button class="menu-button" id="startButton">Start Game</button>
+            <p style="margin-top: 30px; font-size: 16px; color: rgba(255,255,255,0.8);">
+                🎮 Nintendo Switch Controller:<br>
+                D-Pad = Navigate | A = Select/Catch<br>
+                Left Stick = Move | Right Stick = Camera<br>
+                Plus (+) = Store | Minus (-) = Pause
+            </p>
+        </div>
+    </div>
+
+    <div id="gameCanvas"></div>
+    
+    <div id="ui">
+        <div id="level">Level: 1</div>
+        <div id="money">Money: $0</div>
+        <div id="caught">Butterflies: 0/101</div>
+        <div id="spiders" style="display:none;">Spiders: 0/50</div>
+        <div id="tool">Tool: Hands</div>
+        <div id="character">Character: Default</div>
+        
+        <div id="undergroundStats">
+            <div id="ants">🐜 Ants: 0/20</div>
+            <div id="worms">🪱 Worms: 0/20</div>
+            <div id="snails">🐌 Snails: 0/20</div>
+            <div id="bugs">🐛 Bugs: 0/20</div>
+            <div id="crickets">🦗 Crickets: 0/20</div>
+        </div>
+        
+        <div style="margin-top: 10px; font-size: 14px;">🎮 A = Catch | + = Store | - = Pause</div>
+    </div>
+
+    <div id="controllerStatus">🎮 Controller: Not Connected</div>
+
+    <div id="objective">
+        <h3>📋 Objective</h3>
+        <p id="objectiveText">Catch 101 butterflies!</p>
+    </div>
+
+    <div id="notification"></div>
+    
+    <div id="levelUpNotification">
+        <div class="level-text">🎉 LEVEL UP! 🎉</div>
+        <div class="level-subtitle">Get ready!</div>
+    </div>
+
+    <div id="pauseMenu">
+        <h2>⏸️ Paused</h2>
+        <button id="pauseResume">Resume</button>
+        <button id="pauseMainMenu">Main Menu</button>
+    </div>
+
+    <div id="store">
+        <h2>🦋 Shop</h2>
+        <p id="storeStatus">Money: $0</p>
+        
+        <!-- 🔒 Nets container for easy hiding in Level 3 -->
+        <div id="netsContainer">
+            <h3>Nets</h3>
+            <div id="netButtons"></div>
+        </div>
+
+        <h3>Character Upgrades ($250)</h3>
+        <div id="characterButtons"></div>
+
+        <button class="close" id="storeClose">Close</button>
+    </div>
+
+    <div id="completionScreen">
+        <h1>🎉 Congratulations! 🎉</h1>
+        <p>Thank you for playing my first game demo.</p>
+        <p>I hope you enjoyed playing this game.</p>
+        <p>Thank you!</p>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        console.log("🎮 Game loading...");
+
+        const butterflyTypes = [
+            { name: "Monarch", emoji: "🦋", color: 0xff8c00, speed: 2.5, value: 6, scale: 3.0 },
+            { name: "Blue Morpho", emoji: "🦋", color: 0x0080ff, speed: 3.5, value: 15, scale: 3.5 },
+            { name: "Swallowtail", emoji: "🦋", color: 0xffff00, speed: 2.8, value: 8, scale: 2.8 },
+        ];
+
+        const undergroundCreatureTypes = [
+            { name: "Ant", emoji: "🐜", type: "ants", speed: 1.5, value: 2, scale: 2.0, yPos: 0.2 },
+            { name: "Worm", emoji: "🪱", type: "worms", speed: 0.8, value: 3, scale: 2.5, yPos: 0.3 },
+            { name: "Snail", emoji: "🐌", type: "snails", speed: 0.5, value: 4, scale: 2.2, yPos: 0.2 },
+            { name: "Bug", emoji: "🐛", type: "bugs", speed: 1.2, value: 3, scale: 2.3, yPos: 0.25 },
+            { name: "Cricket", emoji: "🦗", type: "crickets", speed: 2.0, value: 5, scale: 2.4, yPos: 0.2 }
+        ];
+
+        const characterTypes = [
+            { name: "Default", emoji: null, purchased: true },
+            { name: "Astronaut", emoji: "🧑‍🚀", purchased: false },
+            { name: "Police", emoji: "👮", purchased: false },
+            { name: "Elf", emoji: "🧝", purchased: false },
+            { name: "Pilot", emoji: "🧑‍✈️", purchased: false },
+            { name: "Firefighter", emoji: "🧑‍🚒", purchased: false }
+        ];
+
+        const netTiers = [
+            { name: "Basic Net", price: 12, durability: 10, range: 8 },
+            { name: "Advanced Net", price: 24, durability: 5, range: 10 },
+            { name: "Rare Net", price: 36, durability: Infinity, range: 12 }
+        ];
+
+        let gameState = {
+            level: 1,
+            money: 0,
+            butterfliesCaught: 0,
+            spidersCaught: 0,
+            undergroundCaught: { ants: 0, worms: 0, snails: 0, bugs: 0, crickets: 0 },
+            currentNet: null,
+            catchRange: 4,
+            currentCharacterIndex: 0,
+            isPaused: false,
+            isPlaying: false,
+            storeUnlocked: false
+        };
+
+        let menuState = {
+            currentMenu: 'main',
+            selectedIndex: 0,
+            menuButtons: []
+        };
+
+        let gamepad = null;
+        let previousButtonStates = {};
+        let previousDPadState = { up: false, down: false, left: false, right: false };
+        let cameraAngle = 0;
+
+        let scene, camera, renderer, player, netGroup;
+        let butterflies = [], spiders = [], undergroundCreatures = [];
+        let clock;
+        let ambientLight, directionalLight, ground;
+
+        window.addEventListener("gamepadconnected", (e) => {
+            console.log("🎮 Controller connected:", e.gamepad.id);
+            gamepad = e.gamepad;
+            updateControllerStatus(true);
+        });
+
+        window.addEventListener("gamepaddisconnected", (e) => {
+            console.log("🎮 Controller disconnected");
+            gamepad = null;
+            updateControllerStatus(false);
+        });
+
+        function updateControllerStatus(connected) {
+            const status = document.getElementById('controllerStatus');
+            if (connected) {
+                status.textContent = '🎮 Controller: Connected';
+                status.style.background = 'rgba(0,128,0,0.6)';
+            } else {
+                status.textContent = '🎮 Controller: Not Connected';
+                status.style.background = 'rgba(128,0,0,0.6)';
+            }
+        }
+
+        function getGamepad() {
+            const gamepads = navigator.getGamepads();
+            for (let i = 0; i < gamepads.length; i++) {
+                if (gamepads[i]) return gamepads[i];
+            }
+            return null;
+        }
+
+        function isButtonPressed(buttonIndex) {
+            const gp = getGamepad();
+            if (!gp) return false;
+            
+            const pressed = gp.buttons[buttonIndex] && gp.buttons[buttonIndex].pressed;
+            const wasPressed = previousButtonStates[buttonIndex];
+            previousButtonStates[buttonIndex] = pressed;
+            
+            return pressed && !wasPressed;
+        }
+
+        function getDPadInput() {
+            const gp = getGamepad();
+            if (!gp) return { up: false, down: false, left: false, right: false };
+
+            let up = gp.buttons[12] && gp.buttons[12].pressed;
+            let down = gp.buttons[13] && gp.buttons[13].pressed;
+            let left = gp.buttons[14] && gp.buttons[14].pressed;
+            let right = gp.buttons[15] && gp.buttons[15].pressed;
+
+            if (!up && !down && !left && !right) {
+                const axisX = gp.axes[6] || 0;
+                const axisY = gp.axes[7] || 0;
+                
+                if (axisX < -0.5) left = true;
+                if (axisX > 0.5) right = true;
+                if (axisY < -0.5) up = true;
+                if (axisY > 0.5) down = true;
+            }
+
+            const result = {
+                up: up && !previousDPadState.up,
+                down: down && !previousDPadState.down,
+                left: left && !previousDPadState.left,
+                right: right && !previousDPadState.right
+            };
+
+            previousDPadState = { up, down, left, right };
+            return result;
+        }
+
+        // 🔒 PROTECTION LAYER 2: NAVIGATION EXCLUSION
+        function updateMenuButtons() {
+            menuState.menuButtons.forEach(btn => btn.classList.remove('selected'));
+
+            if (menuState.currentMenu === 'main') {
+                menuState.menuButtons = [document.getElementById('startButton')];
+            } else if (menuState.currentMenu === 'pause') {
+                menuState.menuButtons = [
+                    document.getElementById('pauseResume'),
+                    document.getElementById('pauseMainMenu')
+                ];
+            } else if (menuState.currentMenu === 'store') {
+                const buttons = [];
+                
+                // ✅ ONLY add net buttons if NOT in Level 3
+                if (gameState.level !== 3) {
+                    document.querySelectorAll('#netButtons button').forEach(btn => buttons.push(btn));
+                }
+                
+                document.querySelectorAll('#characterButtons button').forEach(btn => buttons.push(btn));
+                buttons.push(document.getElementById('storeClose'));
+                menuState.menuButtons = buttons;
+            }
+
+            menuState.selectedIndex = Math.max(0, Math.min(menuState.selectedIndex, menuState.menuButtons.length - 1));
+
+            if (menuState.menuButtons[menuState.selectedIndex]) {
+                menuState.menuButtons[menuState.selectedIndex].classList.add('selected');
+                
+                if (menuState.currentMenu === 'store') {
+                    menuState.menuButtons[menuState.selectedIndex].scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest' 
+                    });
+                }
+            }
+        }
+
+        function handleMenuNavigation() {
+            const dpad = getDPadInput();
+
+            if (dpad.up) {
+                menuState.selectedIndex--;
+                if (menuState.selectedIndex < 0) {
+                    menuState.selectedIndex = menuState.menuButtons.length - 1;
+                }
+                updateMenuButtons();
+            }
+
+            if (dpad.down) {
+                menuState.selectedIndex++;
+                if (menuState.selectedIndex >= menuState.menuButtons.length) {
+                    menuState.selectedIndex = 0;
+                }
+                updateMenuButtons();
+            }
+
+            if (isButtonPressed(1)) {
+                const selectedButton = menuState.menuButtons[menuState.selectedIndex];
+                if (selectedButton) {
+                    selectedButton.click();
+                }
+            }
+
+            if (isButtonPressed(0) && menuState.currentMenu === 'store') {
+                toggleStore();
+            }
+        }
+
+        document.getElementById('startButton').onclick = function() {
+            startGame();
+        };
+
+        document.getElementById('pauseResume').onclick = function() {
+            resumeGame();
+        };
+
+        document.getElementById('pauseMainMenu').onclick = function() {
+            location.reload();
+        };
+
+        document.getElementById('storeClose').onclick = function() {
+            toggleStore();
+        };
+
+        function startGame() {
+            console.log("✅ Starting game...");
+            document.getElementById('menuPage').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            menuState.currentMenu = 'game';
+            gameState.isPlaying = true;
+            initGame();
+        }
+
+        function resumeGame() {
+            gameState.isPaused = false;
+            document.getElementById('pauseMenu').style.display = 'none';
+            menuState.currentMenu = 'game';
+        }
+
+        // 🔒 PROTECTION LAYER 1: VISUAL HIDING
+        function toggleStore() {
+            const store = document.getElementById('store');
+            const netsContainer = document.getElementById('netsContainer');
+            
+            // ✅ Hide nets completely in Level 3 using CSS
+            if (gameState.level === 3) {
+                netsContainer.classList.add('hidden');
+            } else {
+                netsContainer.classList.remove('hidden');
+            }
+            
+            if (store.style.display === 'block') {
+                store.style.display = 'none';
+                menuState.currentMenu = 'game';
+            } else {
+                store.style.display = 'block';
+                menuState.currentMenu = 'store';
+                menuState.selectedIndex = 0;
+                updateMenuButtons();
+            }
+        }
+
+        function initGame() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('gameCanvas').appendChild(renderer.domElement);
+
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            const groundGeometry = new THREE.PlaneGeometry(150, 150);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            player = new THREE.Group();
+            const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
+            const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0066ff });
+            const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+            playerMesh.castShadow = true;
+            player.add(playerMesh);
+            player.position.set(0, 1.5, 0);
+            scene.add(player);
+
+            createNet();
+            createPlayground();
+
+            camera.position.set(0, 8, 12);
+            
+            spawnButterflies(15);
+            
+            setupStore();
+
+            clock = new THREE.Clock();
+            updateUI();
+            updateObjective();
+            
+            console.log("✅ Game started!");
+        }
+
+        function createNet() {
+            netGroup = new THREE.Group();
+            const hoopGeometry = new THREE.TorusGeometry(0.8, 0.08, 16, 32);
+            const hoopMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const hoop = new THREE.Mesh(hoopGeometry, hoopMaterial);
+            hoop.rotation.x = Math.PI / 2;
+            netGroup.add(hoop);
+            
+            const netShape = new THREE.ConeGeometry(0.8, 2.5, 8, 4, true);
+            const netMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, wireframe: true });
+            const netMesh = new THREE.Mesh(netShape, netMaterial);
+            netMesh.position.y = -1.25;
+            netGroup.add(netMesh);
+            
+            const handleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2.5, 8);
+            const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+            const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+            handle.position.y = -2.5;
+            netGroup.add(handle);
+            
+            netGroup.position.set(0.7, 0.5, -2);
+            netGroup.rotation.x = Math.PI / 6;
+            netGroup.visible = false;
+            player.add(netGroup);
+        }
+
+        function updatePlayerAppearance() {
+            const childrenToRemove = [];
+            player.children.forEach(child => {
+                if (child !== netGroup) {
+                    childrenToRemove.push(child);
+                }
+            });
+            childrenToRemove.forEach(child => {
+                player.remove(child);
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (child.material.map) child.material.map.dispose();
+                    child.material.dispose();
+                }
+            });
+
+            const currentChar = characterTypes[gameState.currentCharacterIndex];
+            
+            if (currentChar.emoji) {
+                const texture = createEmojiTexture(currentChar.emoji);
+                const spriteMaterial = new THREE.SpriteMaterial({ 
+                    map: texture,
+                    transparent: true
+                });
+                const playerSprite = new THREE.Sprite(spriteMaterial);
+                playerSprite.scale.set(2.5, 2.5, 1);
+                playerSprite.position.y = 0;
+                player.add(playerSprite);
+            } else {
+                const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
+                const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0066ff });
+                const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+                playerMesh.castShadow = true;
+                player.add(playerMesh);
+            }
+        }
+
+        function createPlayground() {
+            const slideGroup = new THREE.Group();
+            const stairsGeometry = new THREE.BoxGeometry(2, 4, 2);
+            const stairsMaterial = new THREE.MeshLambertMaterial({ color: 0xff6b6b });
+            const stairs = new THREE.Mesh(stairsGeometry, stairsMaterial);
+            stairs.position.y = 2;
+            stairs.castShadow = true;
+            slideGroup.add(stairs);
+            
+            const slideGeometry = new THREE.BoxGeometry(2, 0.2, 6);
+            const slideMaterial = new THREE.MeshLambertMaterial({ color: 0xffd93d });
+            const slide = new THREE.Mesh(slideGeometry, slideMaterial);
+            slide.position.set(0, 3, 4);
+            slide.rotation.x = Math.PI / 6;
+            slide.castShadow = true;
+            slideGroup.add(slide);
+            slideGroup.position.set(-20, 0, -20);
+            scene.add(slideGroup);
+
+            const swingGroup = new THREE.Group();
+            const poleGeometry = new THREE.CylinderGeometry(0.15, 0.15, 5, 8);
+            const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x4ecdc4 });
+            
+            const pole1 = new THREE.Mesh(poleGeometry, poleMaterial);
+            pole1.position.set(-3, 2.5, 0);
+            pole1.castShadow = true;
+            swingGroup.add(pole1);
+            
+            const pole2 = new THREE.Mesh(poleGeometry, poleMaterial);
+            pole2.position.set(3, 2.5, 0);
+            pole2.castShadow = true;
+            swingGroup.add(pole2);
+            
+            const topBar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 6, 8),
+                poleMaterial
+            );
+            topBar.rotation.z = Math.PI / 2;
+            topBar.position.set(0, 5, 0);
+            topBar.castShadow = true;
+            swingGroup.add(topBar);
+            
+            const seatGeometry = new THREE.BoxGeometry(1, 0.2, 1);
+            const seatMaterial = new THREE.MeshLambertMaterial({ color: 0xff6b9d });
+            
+            const seat1 = new THREE.Mesh(seatGeometry, seatMaterial);
+            seat1.position.set(-1.5, 2, 0);
+            seat1.castShadow = true;
+            swingGroup.add(seat1);
+            
+            const seat2 = new THREE.Mesh(seatGeometry, seatMaterial);
+            seat2.position.set(1.5, 2, 0);
+            seat2.castShadow = true;
+            swingGroup.add(seat2);
+            
+            swingGroup.position.set(20, 0, -20);
+            scene.add(swingGroup);
+
+            const sandboxGeometry = new THREE.BoxGeometry(8, 0.5, 8);
+            const sandboxMaterial = new THREE.MeshLambertMaterial({ color: 0xf4a460 });
+            const sandbox = new THREE.Mesh(sandboxGeometry, sandboxMaterial);
+            sandbox.position.set(-20, 0.25, 20);
+            sandbox.receiveShadow = true;
+            scene.add(sandbox);
+
+            const merryGeometry = new THREE.CylinderGeometry(3, 3, 0.3, 16);
+            const merryMaterial = new THREE.MeshLambertMaterial({ color: 0x95e1d3 });
+            const merry = new THREE.Mesh(merryGeometry, merryMaterial);
+            merry.position.set(20, 0.15, 20);
+            merry.castShadow = true;
+            scene.add(merry);
+
+            for (let i = 0; i < 4; i++) {
+                const benchGroup = new THREE.Group();
+                
+                const seatGeom = new THREE.BoxGeometry(2, 0.2, 0.6);
+                const benchMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const benchSeat = new THREE.Mesh(seatGeom, benchMat);
+                benchSeat.position.y = 0.6;
+                benchSeat.castShadow = true;
+                benchGroup.add(benchSeat);
+                
+                const backGeom = new THREE.BoxGeometry(2, 0.8, 0.1);
+                const benchBack = new THREE.Mesh(backGeom, benchMat);
+                benchBack.position.set(0, 1, -0.3);
+                benchBack.castShadow = true;
+                benchGroup.add(benchBack);
+                
+                const angle = (i / 4) * Math.PI * 2;
+                benchGroup.position.set(Math.cos(angle) * 35, 0, Math.sin(angle) * 35);
+                benchGroup.rotation.y = -angle;
+                scene.add(benchGroup);
+            }
+
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const x = Math.cos(angle) * 45;
+                const z = Math.sin(angle) * 45;
+                scene.add(createTree(x, z));
+            }
+        }
+
+        function createTree(x, z) {
+            const treeGroup = new THREE.Group();
+            
+            const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 5, 8);
+            const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x4a2511 });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.y = 2.5;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            treeGroup.add(trunk);
+            
+            const foliageGeometry = new THREE.ConeGeometry(2, 4, 8);
+            const foliageMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+            
+            const foliage1 = new THREE.Mesh(foliageGeometry, foliageMaterial);
+            foliage1.position.y = 6;
+            foliage1.castShadow = true;
+            foliage1.receiveShadow = true;
+            treeGroup.add(foliage1);
+            
+            const foliage2 = new THREE.Mesh(foliageGeometry, foliageMaterial);
+            foliage2.position.y = 7.5;
+            foliage2.scale.set(0.7, 0.7, 0.7);
+            foliage2.castShadow = true;
+            foliage2.receiveShadow = true;
+            treeGroup.add(foliage2);
+            
+            treeGroup.position.set(x, 0, z);
+            return treeGroup;
+        }
+
+        function createFlower(x, z) {
+            const flowerGroup = new THREE.Group();
+            
+            const stemGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 8);
+            const stemMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+            const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+            stem.position.y = 0.4;
+            stem.castShadow = true;
+            flowerGroup.add(stem);
+            
+            const petalColors = [0xff1493, 0xffff00, 0xff69b4, 0xff4500, 0x9370db];
+            const petalColor = petalColors[Math.floor(Math.random() * petalColors.length)];
+            const petalGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+            const petalMaterial = new THREE.MeshLambertMaterial({ color: petalColor });
+            
+            for (let i = 0; i < 5; i++) {
+                const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+                const angle = (i / 5) * Math.PI * 2;
+                petal.position.set(Math.cos(angle) * 0.2, 0.8, Math.sin(angle) * 0.2);
+                petal.castShadow = true;
+                flowerGroup.add(petal);
+            }
+            
+            const centerGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const centerMaterial = new THREE.MeshLambertMaterial({ color: 0xffd700 });
+            const center = new THREE.Mesh(centerGeometry, centerMaterial);
+            center.position.y = 0.8;
+            center.castShadow = true;
+            flowerGroup.add(center);
+            
+            flowerGroup.position.set(x, 0, z);
+            return flowerGroup;
+        }
+
+        function createEmojiTexture(emoji) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '200px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 128, 128);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        class Butterfly {
+            constructor() {
+                this.type = butterflyTypes[Math.floor(Math.random() * butterflyTypes.length)];
+                this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                    map: createEmojiTexture(this.type.emoji),
+                    transparent: true,
+                    color: this.type.color
+                }));
+                this.sprite.scale.set(this.type.scale, this.type.scale, 1);
+                this.sprite.position.set(Math.random() * 40 - 20, Math.random() * 5 + 3, Math.random() * 40 - 20);
+                this.velocity = new THREE.Vector3();
+                this.targetPosition = this.sprite.position.clone();
+                this.timer = 0;
+                scene.add(this.sprite);
+            }
+
+            get mesh() { return this.sprite; }
+
+            update(dt) {
+                this.timer += dt;
+                if (this.timer >= 3) {
+                    this.targetPosition.set(Math.random() * 40 - 20, Math.random() * 5 + 3, Math.random() * 40 - 20);
+                    this.timer = 0;
+                }
+                const dir = new THREE.Vector3().subVectors(this.targetPosition, this.sprite.position).normalize();
+                this.velocity.lerp(dir.multiplyScalar(this.type.speed), 0.1);
+                this.sprite.position.add(this.velocity.clone().multiplyScalar(dt));
+            }
+
+            remove() {
+                scene.remove(this.sprite);
+                if (this.sprite.material.map) this.sprite.material.map.dispose();
+                this.sprite.material.dispose();
+            }
+        }
+
+        class Spider {
+            constructor() {
+                this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                    map: createEmojiTexture('🕷️'),
+                    transparent: true
+                }));
+                this.sprite.scale.set(2, 2, 1);
+                this.sprite.position.set(Math.random() * 60 - 30, 0.3, Math.random() * 60 - 30);
+                this.velocity = new THREE.Vector3();
+                this.targetPosition = this.sprite.position.clone();
+                this.timer = 0;
+                scene.add(this.sprite);
+            }
+
+            get mesh() { return this.sprite; }
+            
+            update(dt) {
+                this.timer += dt;
+                if (this.timer >= 4) {
+                    this.targetPosition.set(Math.random() * 60 - 30, 0.3, Math.random() * 60 - 30);
+                    this.timer = 0;
+                }
+                const dir = new THREE.Vector3().subVectors(this.targetPosition, this.sprite.position).normalize();
+                this.velocity.lerp(dir.multiplyScalar(0.6), 0.05);
+                this.sprite.position.add(this.velocity.clone().multiplyScalar(dt));
+                this.sprite.position.y = 0.3;
+            }
+
+            remove() {
+                scene.remove(this.sprite);
+                if (this.sprite.material.map) this.sprite.material.map.dispose();
+                this.sprite.material.dispose();
+            }
+        }
+
+        class UndergroundCreature {
+            constructor(type) {
+                this.type = type;
+                this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                    map: createEmojiTexture(type.emoji),
+                    transparent: true
+                }));
+                this.sprite.scale.set(type.scale, type.scale, 1);
+                this.sprite.position.set(Math.random() * 60 - 30, type.yPos, Math.random() * 60 - 30);
+                this.velocity = new THREE.Vector3();
+                this.targetPosition = this.sprite.position.clone();
+                this.timer = 0;
+                this.changeInterval = Math.random() * 3 + 2;
+                scene.add(this.sprite);
+            }
+
+            get mesh() { return this.sprite; }
+            
+            update(dt) {
+                this.timer += dt;
+                if (this.timer >= this.changeInterval) {
+                    this.targetPosition.set(
+                        Math.random() * 60 - 30, 
+                        this.type.yPos, 
+                        Math.random() * 60 - 30
+                    );
+                    this.timer = 0;
+                    this.changeInterval = Math.random() * 3 + 2;
+                }
+                
+                const dir = new THREE.Vector3().subVectors(this.targetPosition, this.sprite.position).normalize();
+                this.velocity.lerp(dir.multiplyScalar(this.type.speed), 0.08);
+                this.sprite.position.add(this.velocity.clone().multiplyScalar(dt));
+                this.sprite.position.y = this.type.yPos;
+            }
+
+            remove() {
+                scene.remove(this.sprite);
+                if (this.sprite.material.map) this.sprite.material.map.dispose();
+                this.sprite.material.dispose();
+            }
+        }
+
+        function spawnButterflies(count) {
+            for (let i = 0; i < count; i++) butterflies.push(new Butterfly());
+        }
+
+        function spawnSpiders(count) {
+            for (let i = 0; i < count; i++) spiders.push(new Spider());
+        }
+
+        function spawnUnderground() {
+            undergroundCreatureTypes.forEach(type => {
+                for (let i = 0; i < 8; i++) undergroundCreatures.push(new UndergroundCreature(type));
+            });
+        }
+
+        function tryCatch() {
+            const range = gameState.currentNet !== null ? netTiers[gameState.currentNet].range : gameState.catchRange;
+            let closest = null;
+            let closestDist = range;
+            let type = null;
+
+            const creatures = gameState.level === 1 ? butterflies : 
+                             gameState.level === 2 ? spiders : undergroundCreatures;
+
+            creatures.forEach(c => {
+                const dist = player.position.distanceTo(c.mesh.position);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = c;
+                    type = gameState.level;
+                }
+            });
+
+            if (closest) {
+                if (type === 1) catchButterfly(closest);
+                else if (type === 2) catchSpider(closest);
+                else catchUnderground(closest);
+            } else {
+                gameState.money = Math.max(0, gameState.money - 1);
+                showNotification("Missed! -$1", true);
+                updateUI();
+            }
+        }
+
+        function catchButterfly(b) {
+            gameState.money += b.type.value;
+            gameState.butterfliesCaught++;
+            showNotification(`${b.type.name} +$${b.type.value}`);
+            b.remove();
+            butterflies = butterflies.filter(x => x !== b);
+            setTimeout(() => butterflies.push(new Butterfly()), 1000);
+            
+            if (gameState.butterfliesCaught === 101) {
+                setTimeout(() => levelUp(2), 1000);
+            }
+            if (!gameState.storeUnlocked && gameState.butterfliesCaught >= 2) {
+                gameState.storeUnlocked = true;
+                setTimeout(() => showNotification("🎉 Store Unlocked! Press +"), 2500);
+            }
+            updateUI();
+        }
+
+        function catchSpider(s) {
+            gameState.money += 1;
+            gameState.spidersCaught++;
+            showNotification("🕷️ Spider +$1");
+            s.remove();
+            spiders = spiders.filter(x => x !== s);
+            setTimeout(() => spiders.push(new Spider()), 2000);
+            
+            if (gameState.spidersCaught === 50) {
+                setTimeout(() => levelUp(3), 1000);
+            }
+            updateUI();
+        }
+
+        function catchUnderground(c) {
+            gameState.money += c.type.value;
+            gameState.undergroundCaught[c.type.type]++;
+            showNotification(`${c.type.name} +$${c.type.value}`);
+            c.remove();
+            undergroundCreatures = undergroundCreatures.filter(x => x !== c);
+            setTimeout(() => undergroundCreatures.push(new UndergroundCreature(c.type)), 1500);
+            
+            const done = Object.values(gameState.undergroundCaught).every(x => x >= 20);
+            if (done) {
+                setTimeout(() => {
+                    gameState.isPaused = true;
+                    document.getElementById('completionScreen').classList.add('show');
+                }, 1000);
+            }
+            updateUI();
+        }
+
+        function levelUp(lvl) {
+            gameState.level = lvl;
+            gameState.isPaused = true;
+            
+            const notif = document.getElementById('levelUpNotification');
+            notif.querySelector('.level-text').textContent = lvl === 2 ? '🌙 LEVEL 2! 🌙' : '🪱 LEVEL 3! 🪱';
+            notif.querySelector('.level-subtitle').textContent = lvl === 2 ? 'Night Forest!' : 'Underground!';
+            notif.classList.add('show');
+            
+            setTimeout(() => {
+                notif.classList.remove('show');
+                gameState.isPaused = false;
+                if (lvl === 2) {
+                    scene.background = new THREE.Color(0x0a0a1a);
+                    ground.material.color = new THREE.Color(0x1a3a1a);
+                    ambientLight.intensity = 0.15;
+                    
+                    const treePositions = [
+                        [-20, -20], [-20, 20], [20, -20], [20, 20],
+                        [-30, 0], [30, 0], [0, -30], [0, 30],
+                        [-25, -15], [-25, 15], [25, -15], [25, 12]
+                    ];
+                    treePositions.forEach(([x, z]) => {
+                        const tree = createTree(x, z);
+                        tree.children.forEach(child => {
+                            if (child.material) child.material.color = new THREE.Color(0x1a4d2e);
+                        });
+                        scene.add(tree);
+                    });
+                    
+                    for (let i = 0; i < 25; i++) {
+                        const x = Math.random() * 80 - 40;
+                        const z = Math.random() * 80 - 40;
+                        scene.add(createFlower(x, z));
+                    }
+                    
+                    spawnSpiders(15);
+                    document.getElementById('spiders').style.display = 'block';
+                } else {
+                    butterflies.forEach(b => b.remove());
+                    butterflies = [];
+                    spiders.forEach(s => s.remove());
+                    spiders = [];
+                    scene.background = new THREE.Color(0x2d1f15);
+                    ground.material.color = new THREE.Color(0x6b4423);
+                    ambientLight.color = new THREE.Color(0xaa8866);
+                    ambientLight.intensity = 0.4;
+                    spawnUnderground();
+                    document.getElementById('undergroundStats').style.display = 'block';
+                    document.getElementById('spiders').style.display = 'none';
+                }
+                updateObjective();
+            }, 3000);
+            updateUI();
+        }
+
+        // 🔒 PROTECTION LAYER 3: PURCHASE LOGIC BLOCK
+        function setupStore() {
+            const netContainer = document.getElementById('netButtons');
+            netContainer.innerHTML = '';
+            netTiers.forEach((net, i) => {
+                const btn = document.createElement('button');
+                btn.innerHTML = `<strong>${net.name} - $${net.price}</strong>`;
+                btn.onclick = () => {
+                    // ✅ BLOCK purchasing nets in Level 3
+                    if (gameState.level === 3) {
+                        showNotification("Nets not needed underground!", true);
+                        return; // Exit early - no purchase
+                    }
+                    
+                    if (gameState.money >= net.price) {
+                        gameState.money -= net.price;
+                        gameState.currentNet = i;
+                        netGroup.visible = true;
+                        showNotification(`${net.name} bought!`);
+                        updateUI();
+                    } else {
+                        showNotification(`Need $${net.price}`, true);
+                    }
+                };
+                netContainer.appendChild(btn);
+            });
+
+            updateCharacterButtons();
+        }
+
+        function updateCharacterButtons() {
+            const charContainer = document.getElementById('characterButtons');
+            charContainer.innerHTML = '';
+            
+            characterTypes.forEach((char, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'character-button';
+                btn.innerHTML = `<span class="character-preview">${char.emoji || '👤'}</span><span>${char.name} - ${char.purchased ? 'OWNED' : '$250'}</span>`;
+                if (char.purchased) btn.classList.add('purchased');
+                btn.onclick = () => {
+                    if (char.purchased) {
+                        gameState.currentCharacterIndex = i;
+                        updatePlayerAppearance();
+                        showNotification(`Character: ${char.name}`);
+                        updateUI();
+                    } else if (gameState.money >= 250) {
+                        gameState.money -= 250;
+                        characterTypes[i].purchased = true;
+                        gameState.currentCharacterIndex = i;
+                        updatePlayerAppearance();
+                        showNotification(`${char.name} purchased!`);
+                        updateUI();
+                        updateCharacterButtons();
+                    } else {
+                        showNotification('Need $250', true);
+                    }
+                };
+                charContainer.appendChild(btn);
+            });
+        }
+
+        function updateObjective() {
+            const text = document.getElementById('objectiveText');
+            if (gameState.level === 1) {
+                text.innerHTML = '🦋 Level 1: Kids Park<br>Catch 101 butterflies!';
+            } else if (gameState.level === 2) {
+                text.innerHTML = '🌙 Level 2: Night Forest<br>Catch 50 spiders!';
+            } else {
+                text.innerHTML = '🪱 Level 3: Underground<br>Catch 20 of each creature!';
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('level').textContent = `Level: ${gameState.level}`;
+            document.getElementById('money').textContent = `Money: $${gameState.money}`;
+            document.getElementById('storeStatus').textContent = `Money: $${gameState.money}`;
+            document.getElementById('character').textContent = `Character: ${characterTypes[gameState.currentCharacterIndex].name}`;
+            
+            if (gameState.level === 1) {
+                document.getElementById('caught').textContent = `Butterflies: ${gameState.butterfliesCaught}/101`;
+            } else if (gameState.level === 2) {
+                document.getElementById('caught').style.display = 'none';
+                document.getElementById('spiders').textContent = `Spiders: ${gameState.spidersCaught}/50`;
+            } else {
+                document.getElementById('ants').textContent = `🐜 Ants: ${gameState.undergroundCaught.ants}/20`;
+                document.getElementById('worms').textContent = `🪱 Worms: ${gameState.undergroundCaught.worms}/20`;
+                document.getElementById('snails').textContent = `🐌 Snails: ${gameState.undergroundCaught.snails}/20`;
+                document.getElementById('bugs').textContent = `🐛 Bugs: ${gameState.undergroundCaught.bugs}/20`;
+                document.getElementById('crickets').textContent = `🦗 Crickets: ${gameState.undergroundCaught.crickets}/20`;
+            }
+        }
+
+        function showNotification(msg, isNeg = false) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.className = isNeg ? 'money-negative' : '';
+            notif.style.display = 'block';
+            setTimeout(() => notif.style.display = 'none', 2000);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (menuState.currentMenu === 'main' || menuState.currentMenu === 'pause' || menuState.currentMenu === 'store') {
+                handleMenuNavigation();
+                if (renderer && scene && camera) renderer.render(scene, camera);
+                return;
+            }
+
+            if (!gameState.isPlaying || gameState.isPaused) {
+                if (renderer) renderer.render(scene, camera);
+                return;
+            }
+
+            const dt = clock.getDelta();
+
+            const gp = getGamepad();
+            if (gp) {
+                const leftX = Math.abs(gp.axes[0]) > 0.15 ? gp.axes[0] : 0;
+                const leftY = Math.abs(gp.axes[1]) > 0.15 ? gp.axes[1] : 0;
+
+                const move = new THREE.Vector3();
+                move.x = leftX;
+                move.z = leftY;
+
+                if (move.length() > 0) {
+                    move.normalize();
+                    move.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraAngle);
+                    player.position.add(move.multiplyScalar(8 * dt));
+                    player.position.x = Math.max(-60, Math.min(60, player.position.x));
+                    player.position.z = Math.max(-60, Math.min(60, player.position.z));
+                }
+
+                const rightX = Math.abs(gp.axes[2]) > 0.15 ? gp.axes[2] : 0;
+                if (rightX !== 0) {
+                    cameraAngle += rightX * dt * 2;
+                }
+
+                if (isButtonPressed(1)) {
+                    tryCatch();
+                }
+
+                if (isButtonPressed(9) && gameState.storeUnlocked) {
+                    toggleStore();
+                }
+
+                if (isButtonPressed(8)) {
+                    gameState.isPaused = !gameState.isPaused;
+                    const pauseMenu = document.getElementById('pauseMenu');
+                    pauseMenu.style.display = gameState.isPaused ? 'block' : 'none';
+                    if (gameState.isPaused) {
+                        menuState.currentMenu = 'pause';
+                        menuState.selectedIndex = 0;
+                        updateMenuButtons();
+                    } else {
+                        menuState.currentMenu = 'game';
+                    }
+                }
+            }
+
+            const camOffset = new THREE.Vector3(Math.sin(cameraAngle) * 10, 6, Math.cos(cameraAngle) * 10);
+            camera.position.copy(player.position).add(camOffset);
+            camera.lookAt(player.position);
+
+            butterflies.forEach(b => b.update(dt));
+            spiders.forEach(s => s.update(dt));
+            undergroundCreatures.forEach(c => c.update(dt));
+
+            renderer.render(scene, camera);
+        }
+
+        menuState.currentMenu = 'main';
+        updateMenuButtons();
+        animate();
+
+        window.addEventListener('resize', () => {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+
+        console.log("✅ Game script loaded!");
+    </script>
+</body>
+</html>
