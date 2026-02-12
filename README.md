@@ -126,4 +126,4 @@ This project is open source and available for personal use and learning.
 ---
 
 **Enjoy catching butterflies! 🦋✨**
-**Thank you to all the gamers in youtube that motivated me to create a game**
+**Thank you to all the gamers in YouTube that motivated me to create a game.**
