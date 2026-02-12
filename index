@@ -17,7 +17,7 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    #menuPage {
+    #characterSelectionPage {
         position: fixed;
         top: 0;
         left: 0;
@@ -25,6 +25,94 @@
         height: 100vh;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    #characterSelectionPage.hidden {
+        display: none;
+    }
+
+    .selection-content {
+        text-align: center;
+        color: white;
+    }
+
+    .selection-content h1 {
+        font-size: 64px;
+        margin-bottom: 20px;
+        text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+    }
+
+    .selection-content h2 {
+        font-size: 32px;
+        margin-bottom: 50px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .color-buttons {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+
+    .color-button {
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        border: 5px solid white;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .color-button.pink {
+        background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    }
+
+    .color-button.blue {
+        background: linear-gradient(135deg, #4169e1 0%, #0066ff 100%);
+    }
+
+    .color-button:hover, .color-button.selected {
+        transform: scale(1.15);
+        box-shadow: 0 15px 50px rgba(255, 215, 0, 0.8);
+        border: 5px solid #ffd700;
+        animation: pulseGlow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% {
+            box-shadow: 0 15px 50px rgba(255, 215, 0, 0.8);
+        }
+        50% {
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 1);
+        }
+    }
+
+    .color-preview {
+        font-size: 80px;
+        margin-bottom: 10px;
+    }
+
+    #menuPage {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: none;
         justify-content: center;
         align-items: center;
         z-index: 999;
@@ -408,6 +496,26 @@
     </style>
 </head>
 <body>
+    <div id="characterSelectionPage">
+        <div class="selection-content">
+            <h1>🦋 Catching Butterflies</h1>
+            <h2>Choose Your Character Color</h2>
+            <div class="color-buttons">
+                <div class="color-button pink selected" id="pinkButton">
+                    <div class="color-preview">💖</div>
+                    <div>Pink</div>
+                </div>
+                <div class="color-button blue" id="blueButton">
+                    <div class="color-preview">💙</div>
+                    <div>Blue</div>
+                </div>
+            </div>
+            <p style="font-size: 16px; color: rgba(255,255,255,0.8);">
+                🎮 D-Pad Left/Right OR Left Stick to Choose | Press A to Confirm
+            </p>
+        </div>
+    </div>
+
     <div id="menuPage">
         <div class="menu-content">
             <h1>🦋 Catching Butterflies</h1>
@@ -461,7 +569,7 @@
         <p id="storeStatus">Money: $0</p>
         
         <div id="netsContainer">
-            <h3>Nets</h3>
+            <h3>Wastebaskets 🗑️</h3>
             <div id="netButtons"></div>
         </div>
 
@@ -493,7 +601,7 @@
     <script type="module">
         import * as THREE from 'three';
 
-        console.log("Game script loading...");
+        console.log("🎮 Game loading...");
 
         const butterflyTypes = [
             { name: "Monarch", emoji: "🦋", color: 0xff8c00, speed: 2.5, value: 6, scale: 3.0 },
@@ -519,10 +627,13 @@
         ];
 
         const netTiers = [
-            { name: "Basic Net", price: 12, durability: 10, range: 8 },
-            { name: "Advanced Net", price: 24, durability: 5, range: 10 },
-            { name: "Rare Net", price: 36, durability: Infinity, range: 12 }
+            { name: "Basic Wastebasket", price: 12, durability: 10, range: 8 },
+            { name: "Advanced Wastebasket", price: 24, durability: 5, range: 10 },
+            { name: "Rare Wastebasket", price: 36, durability: Infinity, range: 12 }
         ];
+
+        let selectedCharacterColor = 'pink';
+        let colorSelectionIndex = 0;
 
         let gameState = {
             level: 1,
@@ -539,7 +650,7 @@
         };
 
         let menuState = {
-            currentMenu: 'main',
+            currentMenu: 'colorSelection',
             selectedIndex: 0,
             menuButtons: []
         };
@@ -555,14 +666,14 @@
         let cameraAngle = 0;
 
         window.addEventListener("gamepadconnected", (e) => {
-            console.log("Controller connected:", e.gamepad.id);
+            console.log("✅ Controller connected:", e.gamepad.id);
             gamepad = e.gamepad;
-            document.getElementById('controllerStatus').textContent = '🎮 Nintendo Switch Controller Connected';
+            document.getElementById('controllerStatus').textContent = '🎮 Controller Connected - Ready!';
             document.getElementById('controllerStatus').style.background = 'rgba(0,128,0,0.6)';
         });
 
         window.addEventListener("gamepaddisconnected", (e) => {
-            console.log("Controller disconnected");
+            console.log("❌ Controller disconnected");
             gamepad = null;
             document.getElementById('controllerStatus').textContent = '🎮 Controller Disconnected';
             document.getElementById('controllerStatus').style.background = 'rgba(128,0,0,0.6)';
@@ -613,37 +724,108 @@
 
         function getDPadInput() {
             const gp = getGamepad();
-            if (!gp) return { up: false, down: false };
+            if (!gp) return { up: false, down: false, left: false, right: false };
 
             let upPressed = gp.buttons[12] && gp.buttons[12].pressed;
             let downPressed = gp.buttons[13] && gp.buttons[13].pressed;
+            let leftPressed = gp.buttons[14] && gp.buttons[14].pressed;
+            let rightPressed = gp.buttons[15] && gp.buttons[15].pressed;
             
             const upJustPressed = upPressed && !previousDPadState.up;
             const downJustPressed = downPressed && !previousDPadState.down;
+            const leftJustPressed = leftPressed && !previousDPadState.left;
+            const rightJustPressed = rightPressed && !previousDPadState.right;
             
             previousDPadState.up = upPressed;
             previousDPadState.down = downPressed;
+            previousDPadState.left = leftPressed;
+            previousDPadState.right = rightPressed;
 
             return { 
                 up: upJustPressed, 
-                down: downJustPressed 
+                down: downJustPressed,
+                left: leftJustPressed,
+                right: rightJustPressed
             };
         }
 
+        function updateColorSelection() {
+            const pinkButton = document.getElementById('pinkButton');
+            const blueButton = document.getElementById('blueButton');
+            
+            pinkButton.classList.remove('selected');
+            blueButton.classList.remove('selected');
+            
+            if (colorSelectionIndex === 0) {
+                pinkButton.classList.add('selected');
+                selectedCharacterColor = 'pink';
+            } else {
+                blueButton.classList.add('selected');
+                selectedCharacterColor = 'blue';
+            }
+            
+            console.log("🎨 Color:", selectedCharacterColor);
+        }
+
         function handleMenuNavigation() {
-            if (menuState.currentMenu === 'main' || menuState.currentMenu === 'completion') {
-                // A button (button 1) to select
+            const gp = getGamepad();
+            
+            if (menuState.currentMenu === 'colorSelection') {
+                const dpad = getDPadInput();
+                
+                // D-Pad Left/Right
+                if (dpad.left) {
+                    console.log("⬅️ D-Pad Left");
+                    colorSelectionIndex = 0;
+                    updateColorSelection();
+                }
+                if (dpad.right) {
+                    console.log("➡️ D-Pad Right");
+                    colorSelectionIndex = 1;
+                    updateColorSelection();
+                }
+                
+                // Also support left analog stick for selection
+                if (gp) {
+                    const leftX = gp.axes[0];
+                    if (leftX < -0.5) {
+                        if (!previousDPadState.leftStick) {
+                            console.log("⬅️ Left Stick Left");
+                            colorSelectionIndex = 0;
+                            updateColorSelection();
+                            previousDPadState.leftStick = true;
+                        }
+                    } else if (leftX > 0.5) {
+                        if (!previousDPadState.leftStick) {
+                            console.log("➡️ Left Stick Right");
+                            colorSelectionIndex = 1;
+                            updateColorSelection();
+                            previousDPadState.leftStick = true;
+                        }
+                    } else {
+                        previousDPadState.leftStick = false;
+                    }
+                }
+                
+                // A button to confirm
+                if (isButtonPressed(1) || isButtonPressed(0)) {
+                    console.log("✅ Confirmed:", selectedCharacterColor);
+                    document.getElementById('characterSelectionPage').classList.add('hidden');
+                    document.getElementById('menuPage').style.display = 'flex';
+                    menuState.currentMenu = 'main';
+                    menuState.selectedIndex = 0;
+                    updateMenuButtons();
+                }
+            } else if (menuState.currentMenu === 'main' || menuState.currentMenu === 'completion') {
                 if (isButtonPressed(1) || isButtonPressed(0)) {
                     const selectedButton = menuState.menuButtons[menuState.selectedIndex];
                     if (selectedButton) {
-                        console.log("Controller A button pressed - clicking button");
                         selectedButton.click();
                     }
                 }
             } else if (menuState.currentMenu === 'store') {
                 const dpad = getDPadInput();
                 
-                // D-Pad navigation
                 if (dpad.up) {
                     menuState.selectedIndex--;
                     if (menuState.selectedIndex < 0) {
@@ -662,7 +844,6 @@
                     scrollToSelected();
                 }
 
-                // A button to select
                 if (isButtonPressed(1)) {
                     const selectedButton = menuState.menuButtons[menuState.selectedIndex];
                     if (selectedButton) {
@@ -670,7 +851,6 @@
                     }
                 }
 
-                // B button (button 0) to close store
                 if (isButtonPressed(0)) {
                     toggleStore();
                 }
@@ -684,35 +864,45 @@
             
             if (menuState.menuButtons[menuState.selectedIndex]) {
                 const selectedButton = menuState.menuButtons[menuState.selectedIndex];
-                
                 selectedButton.scrollIntoView({ 
                     behavior: 'smooth', 
                     block: 'center',
                     inline: 'nearest'
                 });
-                
                 selectedButton.style.transition = 'all 0.3s ease';
             }
         }
 
         function setupButtons() {
-            console.log("Setting up buttons...");
+            console.log("🔧 Setting up buttons...");
+            
+            const pinkButton = document.getElementById('pinkButton');
+            const blueButton = document.getElementById('blueButton');
+            
+            if (pinkButton) {
+                pinkButton.onclick = function() {
+                    colorSelectionIndex = 0;
+                    updateColorSelection();
+                };
+            }
+            
+            if (blueButton) {
+                blueButton.onclick = function() {
+                    colorSelectionIndex = 1;
+                    updateColorSelection();
+                };
+            }
             
             const startBtn = document.getElementById('startButton');
             if (startBtn) {
                 startBtn.onclick = function() {
-                    console.log("Start button clicked!");
                     startGame();
                 };
-                console.log("Start button handler attached");
-            } else {
-                console.error("Start button not found!");
             }
 
             const storeCloseBtn = document.getElementById('storeClose');
             if (storeCloseBtn) {
                 storeCloseBtn.onclick = function() {
-                    console.log("Store close clicked!");
                     toggleStore();
                 };
             }
@@ -720,14 +910,13 @@
             const playAgainBtn = document.getElementById('playAgainButton');
             if (playAgainBtn) {
                 playAgainBtn.onclick = function() {
-                    console.log("Play again clicked!");
                     returnToMainMenu();
                 };
             }
         }
 
         function startGame() {
-            console.log("Starting game...");
+            console.log("🚀 Starting game with", selectedCharacterColor);
             document.getElementById('menuPage').style.display = 'none';
             document.getElementById('gameCanvas').style.display = 'block';
             menuState.currentMenu = 'game';
@@ -736,12 +925,14 @@
         }
 
         function returnToMainMenu() {
-            console.log("Returning to main menu...");
+            console.log("🔄 Returning to color selection...");
             
-            document.getElementById('completionScreen').classList.remove('show');
-            document.getElementById('completionScreen').style.display = 'none';
+            const completionScreen = document.getElementById('completionScreen');
+            completionScreen.classList.remove('show');
+            completionScreen.style.display = '';
             document.getElementById('gameCanvas').style.display = 'none';
-            document.getElementById('menuPage').style.display = 'flex';
+            document.getElementById('menuPage').style.display = 'none';
+            document.getElementById('characterSelectionPage').classList.remove('hidden');
             
             gameState = {
                 level: 1,
@@ -778,20 +969,9 @@
                 renderer = null;
             }
             
-            document.getElementById('caught').style.display = 'block';
-            document.getElementById('caught').textContent = 'Butterflies: 0/101';
-            document.getElementById('spiders').style.display = 'none';
-            document.getElementById('spiders').textContent = 'Spiders: 0/50';
-            document.getElementById('undergroundStats').style.display = 'none';
-            document.getElementById('ants').textContent = '🐜 Ants: 0/20';
-            document.getElementById('worms').textContent = '🪱 Worms: 0/20';
-            document.getElementById('snails').textContent = '🐌 Snails: 0/20';
-            document.getElementById('bugs').textContent = '🐛 Bugs: 0/20';
-            document.getElementById('crickets').textContent = '🦗 Crickets: 0/20';
-            
-            menuState.currentMenu = 'main';
-            menuState.selectedIndex = 0;
-            updateMenuButtons();
+            menuState.currentMenu = 'colorSelection';
+            colorSelectionIndex = 0;
+            updateColorSelection();
         }
 
         function toggleStore() {
@@ -816,7 +996,7 @@
         }
 
         function initGame() {
-            console.log("Initializing game...");
+            console.log("🎨 Init game...");
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
 
@@ -842,8 +1022,10 @@
             scene.add(ground);
 
             player = new THREE.Group();
+            
+            const playerColor = selectedCharacterColor === 'pink' ? 0xff69b4 : 0x0066ff;
             const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
-            const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0066ff });
+            const playerMaterial = new THREE.MeshLambertMaterial({ color: playerColor });
             const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
             playerMesh.castShadow = true;
             player.add(playerMesh);
@@ -860,31 +1042,36 @@
             clock = new THREE.Clock();
             updateUI();
             updateObjective();
-            console.log("Game initialized successfully!");
+            console.log("✅ Game ready!");
         }
 
         function createNet() {
             netGroup = new THREE.Group();
-            const hoopGeometry = new THREE.TorusGeometry(0.8, 0.08, 16, 32);
-            const hoopMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
-            const hoop = new THREE.Mesh(hoopGeometry, hoopMaterial);
-            hoop.rotation.x = Math.PI / 2;
-            netGroup.add(hoop);
             
-            const netShape = new THREE.ConeGeometry(0.8, 2.5, 8, 4, true);
-            const netMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, wireframe: true });
-            const netMesh = new THREE.Mesh(netShape, netMaterial);
-            netMesh.position.y = -1.25;
-            netGroup.add(netMesh);
+            const wastebaskets = [
+                { emoji: '🗑️', color: 0xC0C0C0, scale: 2.5 },
+                { emoji: '🗑️', color: 0x4169E1, scale: 2.8 },
+                { emoji: '🗑️', color: 0xFFD700, scale: 3.2 }
+            ];
             
-            const handleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2.5, 8);
-            const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-            const handle = new THREE.Mesh(handleGeometry, handleMaterial);
-            handle.position.y = -2.5;
-            netGroup.add(handle);
+            netGroup.wastebasketSprites = [];
             
-            netGroup.position.set(0.7, 0.5, -2);
-            netGroup.rotation.x = Math.PI / 6;
+            wastebaskets.forEach((basket, index) => {
+                const wastebasketTexture = createEmojiTexture(basket.emoji);
+                const wastebasketMaterial = new THREE.SpriteMaterial({ 
+                    map: wastebasketTexture,
+                    transparent: true,
+                    color: basket.color
+                });
+                const wastebasketSprite = new THREE.Sprite(wastebasketMaterial);
+                wastebasketSprite.scale.set(basket.scale, basket.scale, 1);
+                wastebasketSprite.position.set(0, 0, 0);
+                wastebasketSprite.visible = false;
+                netGroup.add(wastebasketSprite);
+                netGroup.wastebasketSprites.push(wastebasketSprite);
+            });
+            
+            netGroup.position.set(1.5, 0.5, -1.5);
             netGroup.visible = false;
             player.add(netGroup);
         }
@@ -947,18 +1134,27 @@
         function setupStore() {
             const netContainer = document.getElementById('netButtons');
             netContainer.innerHTML = '';
+            const colors = ['🩶 Silver', '🩵 Blue', '💛 Gold'];
+            
             netTiers.forEach((net, i) => {
                 const btn = document.createElement('button');
-                btn.innerHTML = `<strong>${net.name} - $${net.price}</strong><br>Range: ${net.range}`;
+                btn.innerHTML = `<strong>${colors[i]} ${net.name} - $${net.price}</strong><br>Range: ${net.range}`;
                 btn.onclick = () => {
                     if (gameState.level === 3) {
-                        showNotification("Nets not needed underground!", true);
+                        showNotification("Wastebaskets not needed underground!", true);
                         return;
                     }
                     if (gameState.money >= net.price) {
                         gameState.money -= net.price;
                         gameState.currentNet = i;
+                        
                         netGroup.visible = true;
+                        if (netGroup.wastebasketSprites && netGroup.wastebasketSprites.length > 0) {
+                            netGroup.wastebasketSprites.forEach((sprite, index) => {
+                                sprite.visible = (index === i);
+                            });
+                        }
+                        
                         showNotification(`${net.name} bought!`);
                         updateUI();
                     } else {
@@ -1031,8 +1227,9 @@
                 playerSprite.position.y = 0;
                 player.add(playerSprite);
             } else {
+                const playerColor = selectedCharacterColor === 'pink' ? 0xff69b4 : 0x0066ff;
                 const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
-                const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0066ff });
+                const playerMaterial = new THREE.MeshLambertMaterial({ color: playerColor });
                 const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
                 playerMesh.castShadow = true;
                 player.add(playerMesh);
@@ -1260,7 +1457,9 @@
             if (done) {
                 setTimeout(() => {
                     gameState.isPaused = true;
-                    document.getElementById('completionScreen').classList.add('show');
+                    const completionScreen = document.getElementById('completionScreen');
+                    completionScreen.style.display = 'flex';
+                    completionScreen.classList.add('show');
                     menuState.currentMenu = 'completion';
                     menuState.selectedIndex = 0;
                     updateMenuButtons();
@@ -1369,7 +1568,9 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            if (menuState.currentMenu === 'main' || menuState.currentMenu === 'store' || menuState.currentMenu === 'completion') {
+            // Handle menu navigation for ALL menu states
+            if (menuState.currentMenu === 'colorSelection' || menuState.currentMenu === 'main' || 
+                menuState.currentMenu === 'store' || menuState.currentMenu === 'completion') {
                 handleMenuNavigation();
                 if (renderer && scene && camera) renderer.render(scene, camera);
                 return;
@@ -1383,9 +1584,8 @@
             const dt = clock.getDelta();
             const gp = getGamepad();
 
-            // Nintendo Switch Controller Movement
+            // In-game controller movement
             if (gp) {
-                // Left stick for movement
                 const leftX = Math.abs(gp.axes[0]) > 0.15 ? gp.axes[0] : 0;
                 const leftY = Math.abs(gp.axes[1]) > 0.15 ? gp.axes[1] : 0;
 
@@ -1398,18 +1598,15 @@
                     player.position.z = Math.max(-60, Math.min(60, player.position.z));
                 }
 
-                // Right stick for camera rotation
                 const rightX = Math.abs(gp.axes[2]) > 0.15 ? gp.axes[2] : 0;
                 if (rightX !== 0) {
                     cameraAngle += rightX * dt * 2;
                 }
 
-                // A button (button 1) to catch
                 if (isButtonPressed(1)) {
                     tryCatch();
                 }
 
-                // + button (button 9) to open store
                 if (isButtonPressed(9) && gameState.storeUnlocked) {
                     toggleStore();
                 }
@@ -1429,17 +1626,18 @@
             renderer.render(scene, camera);
         }
 
-        console.log("Calling setupButtons...");
+        // Initialize game
+        console.log("🔧 Calling setupButtons...");
         setupButtons();
         
-        console.log("Setting up menu state...");
-        menuState.currentMenu = 'main';
-        updateMenuButtons();
+        console.log("🎨 Setting up color selection...");
+        menuState.currentMenu = 'colorSelection';
+        updateColorSelection();
         
-        console.log("Starting animation loop...");
+        console.log("🎬 Starting animation loop...");
         animate();
         
-        console.log("Game ready! Waiting for Nintendo Switch Controller...");
+        console.log("✅ Game ready! Use your controller to choose a color!");
     </script>
 </body>
 </html>
