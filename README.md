@@ -9,6 +9,10 @@ Sneak Peak
 ## 🎮 Game Preview
 ![Catching Butterflies](https://github.com/user-attachments/assets/fb425065-0933-4c53-bd67-f54018eaec64)
 
+### Pick your Default Character
+- **Pink**
+- **Blue** 
+
 ### Level 1: Kids Park (Day) ☀️
 Catch 101 colorful butterflies in a bright, sunny park surrounded by trees!
 - **Environment**: Bright blue sky with green grass
@@ -42,7 +46,7 @@ Explore the underground world and catch various creatures!
 
 ### Control
 
-**Gamepad (Nintendo Switch Pro Controller):** (feature coming soon)
+**Gamepad (Nintendo Switch Pro Controller):** 
 - `Left Stick` - Move player
 - `Right Stick` - Rotate camera
 - `A Button` - Catch creatures / Select
@@ -55,12 +59,8 @@ Explore the underground world and catch various creatures!
 👉 **[Play Now on GitHub Pages](https://unkn5wn.github.io/catching-butterflies/)**
 
 ### Play Locally
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/Unkn5wn/catching-butterflies.git
-   ```
-2. Open `index.html` in your web browser
-3. Start playing!
+1. Copy the code or download index.html
+2. Start playing with your favorite web browser.
 
 ## 🛠️ Technical Details
 
@@ -126,3 +126,4 @@ This project is open source and available for personal use and learning.
 ---
 
 **Enjoy catching butterflies! 🦋✨**
+**Thank you to all the gamers in youtube that motivated me to create a game**
